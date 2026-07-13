@@ -1,0 +1,16 @@
+
+
+&uart30 {
+	status = "disabled";
+	current-speed = <115200>;
+	pinctrl-0 = <&uart30_default>;
+	pinctrl-1 = <&uart30_sleep>;
+	pinctrl-names = "default", "sleep";
+};
+
+
+
+
+
+
+
