@@ -1,0 +1,239 @@
+/dts-v1/;
+#include <nordic/nrf54l15_cpuapp.dtsi>
+#include "LCLPv4-pinctrl.dtsi"
+#include <zephyr/dt-bindings/regulator/npm13xx.h>
+
+/ {
+	model = "LCLP Datalogger";
+	compatible = "LCLPGroup,LCLPv4-cpuapp";
+
+	chosen {
+		zephyr,code-partition = &slot0_partition;
+		zephyr,sram = &cpuapp_sram;
+		zephyr,flash = &cpuapp_rram;
+		zephyr,flash-controller = &rram_controller;
+		zephyr,console = &uart30;
+	};
+};
+
+
+/ {
+    aliases {
+        lora0 = &lora;
+        watchdog0 = &wdt31;
+        sensoragua = &meu_pino_agua;
+        cartaosdcd = &pino_cd_sd;
+        botaoble = &meu_botao_ble;
+    };
+
+    reserved-memory {
+        #address-cells = <1>;
+        #size-cells = <1>;
+        ranges;
+    };
+};
+
+
+
+&grtc {
+	owned-channels = <0 1 2 3 4 5 6 7 8 9 10 11>;
+	/* Channels 7-11 reserved for Zero Latency IRQs, 3-4 for FLPR */
+	child-owned-channels = <3 4 7 8 9 10 11>;
+	status = "okay";
+};
+
+&cpuapp_sram {
+	status = "okay";
+};
+
+&cpuapp_rram {
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		boot_partition: partition@0 {
+			label = "mcuboot";
+			reg = <0x0 DT_SIZE_K(64)>;
+		};
+
+		slot0_partition: partition@10000 {
+			label = "image-0";
+			reg = <0x10000 DT_SIZE_K(664)>;
+		};
+
+		slot1_partition: partition@b6000 {
+			label = "image-1";
+			reg = <0xb6000 DT_SIZE_K(664)>;
+		};
+
+		storage_partition: partition@15c000 {
+			label = "storage";
+			reg = <0x15c000 DT_SIZE_K(36)>;
+		};
+	};
+};
+
+/ {
+    sensores_externos {
+        compatible = "gpio-keys";
+
+        /* AGORA NO PORTO 0 (P0.04) */
+        meu_pino_agua: sensor_agua_fisico {
+            gpios = <&gpio0 4 (GPIO_ACTIVE_LOW)>;
+            label = "Contador de Agua Reed Switch";
+
+        };
+
+        /* AGORA NO PORTO 1 (P1.13) */
+        meu_botao_ble: botao_ble_fisico {
+            gpios = <&gpio1 13 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+            label = "Botao Ativar BLE";
+
+        };
+
+        /* FICA IGUAL (P1.06) */
+        pino_cd_sd: detecao_cartao_sd {
+            gpios = <&gpio1 6 (GPIO_ACTIVE_LOW )>;
+            label = "Card Detect do Modulo SD";
+
+        };
+    };
+};
+
+&spi22 {
+    compatible = "nordic,nrf-spim";
+    status = "okay";
+
+
+
+    pinctrl-0 = <&spi22_default>;
+    pinctrl-1 = <&spi22_sleep>;
+    pinctrl-names = "default", "sleep";
+
+    /* index 0 -> LoRa (P1.7)
+     * index 1 -> SD   (P1.14)
+     */
+    cs-gpios = <&gpio1 7  (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>,   /* idx 0: LoRa */
+               <&gpio1 14 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;   /* idx 1: SD   */
+
+    lora: sx1276@0 {
+        compatible = "semtech,sx1276";
+        reg = <0>;                    /* usa cs-gpios[0] = GPIO1.7 */
+        status = "okay";
+        spi-max-frequency = <1000000>;
+
+        reset-gpios = <&gpio1 10 GPIO_ACTIVE_LOW>;
+        dio-gpios = <&gpio1 12 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>;
+        power-amplifier-output = "pa-boost";
+    };
+
+    sdhc1: sdhc@1 {
+        compatible = "zephyr,sdhc-spi-slot";
+        reg = <1>;                    /* usa cs-gpios[1] = GPIO1.14 */
+        status = "okay";
+        spi-max-frequency = <1000000>;
+
+        mmc {
+            compatible = "zephyr,sdmmc-disk";
+            status = "okay";
+            disk-name = "SD";
+        };
+    };
+};
+
+&i2c21 {
+    status = "okay";
+    pinctrl-0 = <&i2c21_default>;
+    pinctrl-1 = <&i2c21_sleep>;
+    pinctrl-names = "default", "sleep";
+
+    npm1300@6b {
+        compatible = "nordic,npm1300";
+        reg = <0x6b>;
+
+        /* FILHO 1: Reguladores */
+        npm1300_pmic: regulators {
+            compatible = "nordic,npm1300-regulator";
+
+            /* Usar o VOUT1 físico (BUCK1) */
+            npm1300_buck1: BUCK1 {
+                regulator-min-microvolt = <3300000>;
+                regulator-max-microvolt = <3300000>;
+                regulator-init-microvolt = <3300000>;
+                regulator-boot-off;
+                active-discharge;
+            };
+        };
+
+
+        /* FILHO 2: Carregador */
+        npm1300_charger: charger {
+            compatible = "nordic,npm1300-charger";
+            status = "okay";
+
+            /* 1. TENSÕES E CORRENTES BÁSICAS */
+            term-microvolt = <4200000>;
+            term-warm-microvolt = <4000000>;
+            current-microamp = <500000>;
+
+            /* 2. LIMITES OBRIGATÓRIOS */
+            dischg-limit-microamp = <1000000>;
+            vbus-limit-microamp = <500000>;
+
+            /* 3. SEGURANÇA TÉRMICA (OBRIGATÓRIO PELO DRIVER) */
+            thermistor-ohms = <10000>;
+            thermistor-beta = <3380>;
+            charging-enable;
+        };
+
+
+
+    };
+};
+
+&gpio1 {
+    status = "okay";
+    sense-edge-mask = <0x2040>;
+};
+
+&gpio0 {
+    status = "okay";
+    sense-edge-mask = <0x0010>;
+};
+
+/* ---- GPIOTE (obrigatório para gpio0 e gpio1) ---- */
+&gpiote20 {
+    status = "okay";
+    owned-channels = <0>;
+};
+
+&gpiote30 {
+    status = "okay";
+    owned-channels = <0>;
+};
+
+
+&clock {
+    status = "okay";
+};
+
+&lfxo {
+    status = "okay";
+    load-capacitors = "internal";
+    load-capacitance-femtofarad = <15500>;
+    clock-frequency = <32768>;
+};
+
+
+&regulators {
+	status = "okay";
+};
+
+&vregmain {
+	status = "okay";
+	regulator-initial-mode = <NRF5X_REG_MODE_DCDC>;
+};
+
+
+#include <nordic/nrf54l15_partition.dtsi>

@@ -1,0 +1,10 @@
+identifier: LCLPv4/nrf54l15/cpuflpr
+name: LCLP Datalogger
+vendor: LCLPGroup
+arch: riscv
+toolchain:
+  - zephyr
+sysbuild: true
+ram: 96
+flash: 96
+supported: []

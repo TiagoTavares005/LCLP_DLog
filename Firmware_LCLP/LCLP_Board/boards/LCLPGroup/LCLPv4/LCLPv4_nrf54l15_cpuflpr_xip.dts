@@ -1,0 +1,10 @@
+#include "LCLPv4_nrf54l15_cpuflpr.dts"
+
+/ {
+	compatible = "LCLPGroup,LCLPv4-cpuflpr-xip";
+};
+
+&cpuflpr_sram {
+	reg = <0x2002f000 DT_SIZE_K(68)>;
+	ranges = <0x0 0x2002f000 DT_SIZE_K(68)>;
+};
