@@ -1,0 +1,65 @@
+#include <zephyr/kernel.h>
+#include <zephyr/device.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/sys/printk.h>
+
+/* 1. Definições de Hardware */
+static const struct gpio_dt_spec sensor_pin = GPIO_DT_SPEC_GET(DT_ALIAS(sensoragua), gpios);
+static struct gpio_callback sensor_cb_data;
+
+/* 2. Variáveis na RAM (Sempre disponíveis em System ON) */
+static volatile uint32_t contador_pulsos = 0;
+
+/* 3. Função de Interrupção (ISR) */
+void sensor_isr(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
+{
+    contador_pulsos++; // Incremento ultra-rápido na RAM
+}
+
+/* 4. TAREFA DE RELATÓRIO (Thread dedicada) */
+#define STACK_SIZE 1024
+#define PRIORITY 7
+
+void tarefa_relatorio_thread(void *p1, void *p2, void *p3)
+{
+    printk("[Sistema] Thread de relatório iniciada.\n");
+
+    while (1) {
+        // Dorme exatamente 60 segundos
+        // Durante este tempo, o CPU está em System ON Idle (Baixo Consumo)
+        k_sleep(K_SECONDS(60));
+
+        // Acorda apenas para imprimir
+        printk("\n--- RELATÓRIO MINUTAL ---\n");
+        printk("Pulsos acumulados: %u\n", contador_pulsos);
+        printk("-------------------------\n");
+
+        // Opcional: Se quiseres que o contador seja por minuto, faz reset aqui
+        // contador_pulsos = 0; 
+    }
+}
+
+// Define a thread para iniciar automaticamente
+K_THREAD_DEFINE(id_tarefa_relatorio, STACK_SIZE, tarefa_relatorio_thread, 
+                NULL, NULL, NULL, PRIORITY, 0, 0);
+
+/* 5. MAIN (Apenas configuração) */
+int main(void)
+{
+    printk("\n### Aqualog Pro: Modo Thread Ativo ###\n");
+
+    if (!gpio_is_ready_dt(&sensor_pin)) {
+        return 0;
+    }
+
+    // Configuração do pino com a tua resistência de 500k externa
+    gpio_pin_configure_dt(&sensor_pin, GPIO_INPUT | GPIO_PULL_UP);
+    gpio_pin_interrupt_configure_dt(&sensor_pin, GPIO_INT_EDGE_TO_ACTIVE);
+
+    // Ativa a interrupção
+    gpio_init_callback(&sensor_cb_data, sensor_isr, BIT(sensor_pin.pin));
+    gpio_add_callback(sensor_pin.port, &sensor_cb_data);
+
+    // O main não precisa de fazer mais nada, pode morrer ou dormir
+    return 0;
+}

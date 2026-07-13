@@ -1,0 +1,142 @@
+#include <zephyr/kernel.h>
+#include <zephyr/device.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/sys/printk.h>
+#include <zephyr/sys/poweroff.h>
+#include <zephyr/drivers/flash.h>
+#include <zephyr/storage/flash_map.h>
+#include <zephyr/fs/nvs.h>
+#include <zephyr/drivers/hwinfo.h>
+#include <zephyr/drivers/timer/nrf_grtc_timer.h>
+
+extern int z_nrf_grtc_wakeup_prepare(uint64_t wake_time_us);
+
+static struct nvs_fs fs;
+#define NVS_PARTITION        storage_partition
+#define NVS_PARTITION_DEVICE FIXED_PARTITION_DEVICE(NVS_PARTITION)
+#define NVS_ID_CONTADOR  1 
+#define NVS_ID_ALVO      2 
+
+static const struct gpio_dt_spec sensor_pin = GPIO_DT_SPEC_GET(DT_ALIAS(sensoragua), gpios);
+
+#define CICLO_US (60ULL * 1000000ULL)
+
+static int nvs_init(void)
+{
+    struct flash_pages_info info;
+    fs.flash_device = NVS_PARTITION_DEVICE;
+
+    if (!device_is_ready(fs.flash_device)) {
+        printk("[ERRO] Flash nao pronto\n");
+        return -ENODEV;
+    }
+
+    int rc = flash_get_page_info_by_offs(fs.flash_device, FIXED_PARTITION_OFFSET(NVS_PARTITION), &info);
+    if (rc < 0) { return rc; }
+
+    fs.offset       = FIXED_PARTITION_OFFSET(NVS_PARTITION);
+    fs.sector_size  = info.size;
+    fs.sector_count = FIXED_PARTITION_SIZE(NVS_PARTITION) / fs.sector_size;
+
+    rc = nvs_mount(&fs);
+    if (rc < 0) {
+        printk("[ERRO] nvs_mount: %d\n", rc);
+        return rc;
+    }
+    return 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* Alterado para receber "agora_us" e calcular a diferença correta   */
+/* ------------------------------------------------------------------ */
+static void dormir(uint64_t alvo_us, uint64_t agora_us)
+{
+    if (gpio_is_ready_dt(&sensor_pin)) {
+        gpio_pin_configure_dt(&sensor_pin, GPIO_INPUT | GPIO_PULL_UP);
+        gpio_pin_interrupt_configure_dt(&sensor_pin, GPIO_INT_LEVEL_ACTIVE);
+    }
+
+    /* MATEMÁTICA CORRIGIDA: Passar o tempo relativo (o que falta) */
+    uint64_t falta_us = 0;
+    if (alvo_us > agora_us) {
+        falta_us = alvo_us - agora_us;
+    }
+
+    int rc = z_nrf_grtc_wakeup_prepare(falta_us);
+    if (rc != 0) {
+        printk("[AVISO] grtc_wakeup_prepare: %d\n", rc);
+    }
+
+    k_msleep(20);
+    sys_poweroff();
+}
+
+int main(void)
+{
+    // JANELA DE SALVAÇÃO: 2 segundos para o programador SWD agarrar o chip
+    
+
+    uint64_t agora_us = z_nrf_grtc_timer_read();
+    uint32_t causa = 0;
+    
+    hwinfo_get_reset_cause(&causa);
+    hwinfo_clear_reset_cause();
+
+    bool wakeup_low_power = (causa & RESET_LOW_POWER_WAKE) != 0;
+
+    printk("\n--- BOOT | causa=0x%08X | agora=%llu us ---\n", causa, agora_us);
+
+    if (nvs_init() < 0) {
+        return 0;
+    }
+
+    uint32_t contador = 0;
+    uint64_t alvo_us  = 0;
+
+    nvs_read(&fs, NVS_ID_CONTADOR, &contador, sizeof(contador));
+    int rc_alvo = nvs_read(&fs, NVS_ID_ALVO, &alvo_us, sizeof(alvo_us));
+
+    if (!wakeup_low_power || rc_alvo <= 0) {
+        printk("[COLD BOOT] Novo ciclo iniciado.\n");
+        contador = 0;
+        alvo_us  = agora_us + CICLO_US;
+        nvs_write(&fs, NVS_ID_CONTADOR, &contador, sizeof(contador));
+        nvs_write(&fs, NVS_ID_ALVO,     &alvo_us,   sizeof(alvo_us));
+        
+        printk("[SLEEP] Alvo em %llu us (daqui a %llu s)\n", alvo_us, CICLO_US / 1000000ULL);
+        
+        // Chamada corrigida
+        dormir(alvo_us, agora_us);
+        return 0;
+    }
+
+    if (agora_us >= alvo_us) {
+        printk("\n=====================================\n");
+        printk(" RELATORIO - 1 Minuto concluido!\n");
+        printk(" Pulsos no ultimo minuto: %u\n", contador);
+        printk("=====================================\n");
+
+        contador = 0;
+        alvo_us  = agora_us + CICLO_US;
+        nvs_write(&fs, NVS_ID_CONTADOR, &contador, sizeof(contador));
+        nvs_write(&fs, NVS_ID_ALVO,     &alvo_us,   sizeof(alvo_us));
+
+        k_msleep(200); 
+        printk("[SLEEP] Novo ciclo. Alvo em %llu s\n", CICLO_US / 1000000ULL);
+        
+        // Chamada corrigida
+        dormir(alvo_us, agora_us);
+    } else {
+        contador++;
+        uint64_t falta_ms = (alvo_us - agora_us) / 1000ULL;
+
+        printk("[PULSO] #%u | Faltam %llu ms para relatorio\n", contador, falta_ms);
+
+        nvs_write(&fs, NVS_ID_CONTADOR, &contador, sizeof(contador));
+        
+        // Chamada corrigida
+        dormir(alvo_us, agora_us);
+    }
+
+    return 0;
+}
