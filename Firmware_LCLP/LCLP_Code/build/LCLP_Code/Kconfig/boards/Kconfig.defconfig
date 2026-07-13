@@ -1,0 +1,2 @@
+# Load Zephyr board defconfig descriptions.
+osource "C:/Nordic/LCLP_Board/boards/LCLPGroup/LCLPv4/Kconfig.defconfig"
