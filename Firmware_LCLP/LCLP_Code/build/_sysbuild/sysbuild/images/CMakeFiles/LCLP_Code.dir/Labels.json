@@ -1,0 +1,43 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "C:/Nordic/LCLP_Code/build/_sysbuild/sysbuild/images/CMakeFiles/LCLP_Code"
+		},
+		{
+			"file" : "C:/Nordic/LCLP_Code/build/_sysbuild/sysbuild/images/CMakeFiles/LCLP_Code.rule"
+		},
+		{
+			"file" : "C:/Nordic/LCLP_Code/build/_sysbuild/sysbuild/images/CMakeFiles/LCLP_Code-complete.rule"
+		},
+		{
+			"file" : "C:/Nordic/LCLP_Code/build/_sysbuild/sysbuild/images/LCLP_Code-prefix/src/LCLP_Code-stamp/LCLP_Code-build.rule"
+		},
+		{
+			"file" : "C:/Nordic/LCLP_Code/build/_sysbuild/sysbuild/images/LCLP_Code-prefix/src/LCLP_Code-stamp/LCLP_Code-configure.rule"
+		},
+		{
+			"file" : "C:/Nordic/LCLP_Code/build/_sysbuild/sysbuild/images/LCLP_Code-prefix/src/LCLP_Code-stamp/LCLP_Code-download.rule"
+		},
+		{
+			"file" : "C:/Nordic/LCLP_Code/build/_sysbuild/sysbuild/images/LCLP_Code-prefix/src/LCLP_Code-stamp/LCLP_Code-install.rule"
+		},
+		{
+			"file" : "C:/Nordic/LCLP_Code/build/_sysbuild/sysbuild/images/LCLP_Code-prefix/src/LCLP_Code-stamp/LCLP_Code-mkdir.rule"
+		},
+		{
+			"file" : "C:/Nordic/LCLP_Code/build/_sysbuild/sysbuild/images/LCLP_Code-prefix/src/LCLP_Code-stamp/LCLP_Code-patch.rule"
+		},
+		{
+			"file" : "C:/Nordic/LCLP_Code/build/_sysbuild/sysbuild/images/LCLP_Code-prefix/src/LCLP_Code-stamp/LCLP_Code-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"LCLP_Code"
+		],
+		"name" : "LCLP_Code"
+	}
+}

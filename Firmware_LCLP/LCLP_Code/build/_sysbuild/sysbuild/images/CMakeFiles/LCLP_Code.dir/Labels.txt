@@ -1,0 +1,13 @@
+# Target labels
+ LCLP_Code
+# Source files and their labels
+C:/Nordic/LCLP_Code/build/_sysbuild/sysbuild/images/CMakeFiles/LCLP_Code
+C:/Nordic/LCLP_Code/build/_sysbuild/sysbuild/images/CMakeFiles/LCLP_Code.rule
+C:/Nordic/LCLP_Code/build/_sysbuild/sysbuild/images/CMakeFiles/LCLP_Code-complete.rule
+C:/Nordic/LCLP_Code/build/_sysbuild/sysbuild/images/LCLP_Code-prefix/src/LCLP_Code-stamp/LCLP_Code-build.rule
+C:/Nordic/LCLP_Code/build/_sysbuild/sysbuild/images/LCLP_Code-prefix/src/LCLP_Code-stamp/LCLP_Code-configure.rule
+C:/Nordic/LCLP_Code/build/_sysbuild/sysbuild/images/LCLP_Code-prefix/src/LCLP_Code-stamp/LCLP_Code-download.rule
+C:/Nordic/LCLP_Code/build/_sysbuild/sysbuild/images/LCLP_Code-prefix/src/LCLP_Code-stamp/LCLP_Code-install.rule
+C:/Nordic/LCLP_Code/build/_sysbuild/sysbuild/images/LCLP_Code-prefix/src/LCLP_Code-stamp/LCLP_Code-mkdir.rule
+C:/Nordic/LCLP_Code/build/_sysbuild/sysbuild/images/LCLP_Code-prefix/src/LCLP_Code-stamp/LCLP_Code-patch.rule
+C:/Nordic/LCLP_Code/build/_sysbuild/sysbuild/images/LCLP_Code-prefix/src/LCLP_Code-stamp/LCLP_Code-update.rule

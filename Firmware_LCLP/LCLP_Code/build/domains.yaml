@@ -1,0 +1,7 @@
+default: LCLP_Code
+build_dir: C:/Nordic/LCLP_Code/build
+domains:
+  - name: LCLP_Code
+    build_dir: C:/Nordic/LCLP_Code/build/LCLP_Code
+flash_order:
+  - LCLP_Code

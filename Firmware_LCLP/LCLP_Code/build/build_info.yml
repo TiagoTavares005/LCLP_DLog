@@ -1,0 +1,25 @@
+cmake:
+  application:
+    source-dir: 'C:/ncs/v3.1.1/zephyr/share/sysbuild'
+  board:
+    name: 'LCLPv4'
+    path:
+     - 'C:/Nordic/LCLP_Board/boards/LCLPGroup/LCLPv4'
+    qualifiers: 'nrf54l15/cpuapp'
+    revision: ''
+  images:
+   - name: 'LCLP_Code'
+     source-dir: 'C:/Nordic/LCLP_Code'
+     type: 'MAIN'
+  kconfig:
+    files:
+     - 'C:/Nordic/LCLP_Code/build/_sysbuild/empty.conf'
+     - 'C:/Nordic/LCLP_Code/build/_sysbuild/empty.conf'
+    user-files:
+     - 'C:/Nordic/LCLP_Code/build/_sysbuild/empty.conf'
+  sysbuild: 'true'
+version: '0.1.0'
+west:
+  command: 'C:\ncs\toolchains\c1a76fddb2\opt\bin\Scripts\west build --build-dir c:/Nordic/LCLP_Code/build c:/Nordic/LCLP_Code --pristine --board LCLPv4/nrf54l15/cpuapp -- -DDEBUG_THREAD_INFO=Off -DLCLP_Code_DEBUG_THREAD_INFO=Off -DBOARD_ROOT=C:/Nordic/LCLP_Board'
+  topdir: 'c:\ncs\v3.1.1'
+  version: '1.4.0'

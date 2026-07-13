@@ -1,0 +1,2 @@
+# Load board Kconfig descriptions.
+osource "C:/Nordic/LCLP_Board/boards/LCLPGroup/LCLPv4/Kconfig.LCLPv4"
