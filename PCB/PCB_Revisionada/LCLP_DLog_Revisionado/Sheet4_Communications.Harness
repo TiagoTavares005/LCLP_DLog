@@ -1,0 +1,2 @@
+LoRa=Reset,CS_LoRa,DIO0
+SPI=SCLK,MOSI,MISO
